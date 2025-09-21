@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'; // Added { useState, useEffect }
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext'; // Added import for useAuth
 
 const ProfessionalDashboard: React.FC = () => {
   const { user, token } = useAuth();
