@@ -2,18 +2,95 @@ import React, { useState, useEffect } from 'react'; // Added { useState, useEffe
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { useAuth } from '../context/AuthContext'; // Added import for useAuth
+import { Input } from '../components/ui/input';
+import { Button } from '../components/ui/button';
+import AIChat from '../components/AIChat';
+
+
 
 const ProfessionalDashboard: React.FC = () => {
   const { user, token } = useAuth();
+  const [availability, setAvailability] = useState<string[]>([]);
+  const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
+  const [newAvailability, setNewAvailability] = useState('');
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (user?.role === 'professional') {
       fetchProfessionalBookings();
+      fetchAvailability();
     }
   }, [user]);
+    const fetchAvailability = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/availability/${user?.id}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        }
+      );
+      
+      if (response.ok) {
+        const data = await response.json();
+        setAvailability(data);
+      }
+    } catch (error) {
+      console.error('Error fetching availability:', error);
+    }
+  };
 
+  const updateAvailability = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/availability/${user?.id}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({ 
+            availability: [...availability, newAvailability].filter(item => item.trim() !== '')
+          }),
+        }
+      );
+
+      if (response.ok) {
+        setNewAvailability('');
+        setShowAvailabilityModal(false);
+        fetchAvailability();
+      }
+    } catch (error) {
+      console.error('Error updating availability:', error);
+    }
+  };
+
+  const removeAvailability = async (slot: string) => {
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/availability/${user?.id}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({ 
+            availability: availability.filter(item => item !== slot)
+          }),
+        }
+      );
+
+      if (response.ok) {
+        fetchAvailability();
+      }
+    } catch (error) {
+      console.error('Error removing availability:', error);
+    }
+  };
   const fetchProfessionalBookings = async () => {
     try {
       const response = await fetch(
@@ -99,13 +176,41 @@ const ProfessionalDashboard: React.FC = () => {
         </Card>
         
         <Card>
-          <CardHeader>
+  <CardHeader>
             <CardTitle>Quick Actions</CardTitle>
           </CardHeader>
           <CardContent>
-            <button className="w-full bg-primary text-primary-foreground py-2 px-4 rounded-md hover:bg-primary/90 transition-colors">
+            <button 
+              onClick={() => setShowAvailabilityModal(true)}
+              className="w-full bg-primary text-primary-foreground py-2 px-4 rounded-md hover:bg-primary/90 transition-colors"
+            >
               Manage Availability
             </button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>AI Support</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <AIChat />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Emergency Resources</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2 text-sm">
+              <p><strong>Crisis Hotline:</strong> 988 (Suicide & Crisis Lifeline)</p>
+              <p><strong>Text Line:</strong> Text HOME to 741741</p>
+              <p><strong>Emergency:</strong> 911 or your local emergency number</p>
+              <p className="text-muted-foreground">
+                Remember: This AI is for support only, not emergency care.
+              </p>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -159,6 +264,57 @@ const ProfessionalDashboard: React.FC = () => {
           )}
         </CardContent>
       </Card>
+      {showAvailabilityModal && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Manage Availability</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <h4 className="font-semibold">Current Availability:</h4>
+              {availability.length === 0 ? (
+                <p className="text-muted-foreground">No availability set</p>
+              ) : (
+                <div className="space-y-1">
+                  {availability.map((slot, index) => (
+                    <div key={index} className="flex justify-between items-center py-1">
+                      <span>{slot}</span>
+                      <button
+                        onClick={() => removeAvailability(slot)}
+                        className="text-red-600 hover:text-red-800 text-sm"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Add Time Slot</label>
+              <Input
+                type="text"
+                placeholder="e.g., Monday 9:00 AM - 12:00 PM"
+                value={newAvailability}
+                onChange={(e) => setNewAvailability(e.target.value)}
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <Button onClick={updateAvailability}>
+                Add Slot
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => setShowAvailabilityModal(false)}
+              >
+                Close
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </motion.div>
   );
 };

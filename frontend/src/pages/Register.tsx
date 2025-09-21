@@ -112,9 +112,9 @@ const Register: React.FC = () => {
               
               <Select
                 value={formData.role}
-                onValueChange={(value: 'user' | 'professional') => 
-                  setFormData({ ...formData, role: value })
-                }
+                onValueChange={(value) =>
+  setFormData({ ...formData, role: value as 'user' | 'professional' })
+}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select role" />

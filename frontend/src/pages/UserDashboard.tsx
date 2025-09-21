@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { useAuth } from '../context/AuthContext';
+import AIChat from '../components/AIChat';
+
 
 const ProfessionalDashboard: React.FC = () => {
   const { user, token } = useAuth();
